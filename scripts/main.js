@@ -68,6 +68,7 @@ let tradeTable = async () => {
 		trElements[0].appendChild(document.createElement("button"))
 	];
 	tdElements[0].innerHTML = `${tradeObjOld.name}`;
+	tdElements[0].id = tradeObjOld.id;
 	tdElements[1].innerHTML = `${amount}`;
 	tdElements[2].innerHTML = `${tradeObjOld.price_usd}`;
 	tdElements[3].innerHTML = `${tradeObjOld.price_usd * amount}`;
@@ -79,6 +80,12 @@ let tradeTable = async () => {
 		document.getElementById("accountFunds").innerHTML = `$${accountFunds}`;
 		parent.replaceChildren();
 		parent.remove();
+		console.log(document.getElementById("tradeTableBody").childNodes.length);
+		if (document.getElementById("tradeTableBody").childNodes.length === 0) {
+			//console.log("RAN");
+			document.getElementById("sellAllButton").click();
+			run = false;
+		}
 	});
 
 	//Creates button that removes table
@@ -110,6 +117,7 @@ let tradeTable = async () => {
 		tradeObjOld = await fetch(`https://api.coinlore.net/api/ticker/?id=${id}`)
 			.then(response => response.json());
 		tradeObjOld = tradeObjOld[0];
+		amount = parseNumber(document.getElementById("buyAmountText").value);
 		accountFunds = bankersRound(accountFunds - tradeObjOld.price_usd * amount);
 		document.getElementById("accountFunds").innerHTML = `$${accountFunds}`;
 		let index = trElements.push(document.getElementById("tradeTableBody")
@@ -123,6 +131,7 @@ let tradeTable = async () => {
 			trElements[index].appendChild(document.createElement("button"))
 		];
 		tdElements[0].innerHTML = `${tradeObjOld.name}`;
+		tdElements[0].id = tradeObjOld.id;
 		tdElements[1].innerHTML = `${amount}`;
 		tdElements[2].innerHTML = `${tradeObjOld.price_usd}`;
 		tdElements[3].innerHTML = `${tradeObjOld.price_usd * amount}`;
@@ -134,36 +143,39 @@ let tradeTable = async () => {
 			document.getElementById("accountFunds").innerHTML = `$${accountFunds}`;
 			parent.replaceChildren();
 			parent.remove();
+			console.log(document.getElementById("tradeTableBody").childNodes.length);
+			if (document.getElementById("tradeTableBody").childNodes.length === 0) {
+				//console.log("RAN");
+				document.getElementById("sellAllButton").click();
+				run = false;
+			}
 		});
 	}
 	document.getElementById("buyButton")
 		.addEventListener("click", buy);
 	//Refreshes td elements
-	let tradeObjNew;
 	let time = 2000;
-	let timeResetCount = 0;
 	while (run) {
-		tradeObjNew = await fetch(`https://api.coinlore.net/api/ticker/?id=${id}`)
-			.then(response => response.json());
-		tradeObjNew = tradeObjNew[0];
-		if (JSON.stringify(tradeObjOld) !== JSON.stringify(tradeObjNew)) {
-			Object.assign(tradeObjOld, tradeObjNew);
-			time = 2000;
-			timeResetCount++;
+		for (child of document.getElementById("tradeTableBody").childNodes) {
+			//console.log(child.childNodes[0].id);
+			try {
+				tradeObjOld = await fetch(`https://api.coinlore.net/api/ticker/?id=${child.childNodes[0].id}`)
+					.then(response => response.json());
+			}
+			catch (error) { run = false; break; }
+			tradeObjOld = tradeObjOld[0];
+			console.log(`${tradeObjOld.name}: ${tradeObjOld.price_usd}`);
+			try {
+				child.childNodes[0].innerHTML = `${tradeObjOld.name}`;
+				child.childNodes[2].innerHTML = `${tradeObjOld.price_usd}`;
+				child.childNodes[3].innerHTML = `${tradeObjOld.price_usd * Number(child.childNodes[1].innerHTML)}`;
+			}
+			catch (error) { run = false; break; }
 		}
-		else {
-			time += time; //Extends timeframe
-			console.log(time / 1000);
-			console.log(timeResetCount);
-		}
-		console.log(tdElements);
-		console.log(`${tradeObjNew.name}: ${tradeObjNew.price_usd}`);
-		tdElements[0].innerHTML = `${tradeObjNew.name}`;
-		tdElements[1].innerHTML = `${amount}`;
-		tdElements[2].innerHTML = `${tradeObjNew.price_usd}`;
-		tdElements[3].innerHTML = `${tradeObjNew.price_usd * amount}`;
-		tdElements[4].innerHTML = `SELL ${tradeObjNew.symbol}`;
 		await new Promise(resolve => setTimeout(resolve, time));
+	}
+	if (document.getElementById("sellAllButton")) {
+		document.getElementById("sellAllButton").click();
 	}
 };
 //trade
@@ -304,7 +316,7 @@ let globalTable = async () => {
 	let timeResetCount = 0;
 	while (run) {
 		globalObjNew = await fetch("https://api.coinlore.net/api/global/")
-				.then(response => response.json());
+			.then(response => response.json());
 		globalObjNew = globalObjNew[0];
 		if (JSON.stringify(globalObjOld) !== JSON.stringify(globalObjNew)) {
 			Object.assign(globalObjOld, globalObjNew);

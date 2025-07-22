@@ -9,6 +9,13 @@ let bankersRound = (number, decimals) => {
 		/ Math.pow(10, decimals);
 }
 
+let parseNumber = (string) => {
+	if (string) {
+		return string;
+	}
+	return 1;
+}
+
 //account
 let accountFunds = 0;
 document.getElementById("accountFunds").innerHTML = `$${accountFunds}`;
@@ -23,7 +30,8 @@ let tradeTable = async () => {
 	document.getElementById("buyButton")
 		.removeEventListener("click", tradeTable);
 	let run = true;
-	let amount = Number(document.getElementById("buyAmountText").value);
+	let amount = parseNumber(document.getElementById("buyAmountText").value);
+	let id = parseNumber(document.getElementById("buyNameText").value);
 	//Creates tradeTable
 	document.getElementById("trade").appendChild(document.createElement("table"))
 		.id = "tradeTable";
@@ -45,10 +53,11 @@ let tradeTable = async () => {
 	document.getElementById("tradeTable")
 		.appendChild(document.createElement("tbody")).id = "tradeTableBody";
 	//Creates td elements
-	let tradeObjOld = await fetch(`https://api.coinlore.net/api/ticker/?id=${document.getElementById("buyNameText").value}`)
-			.then(response => response.json())
+	let tradeObjOld = await fetch(`https://api.coinlore.net/api/ticker/?id=${id}`)
+			.then(response => response.json());
 	tradeObjOld = tradeObjOld[0];
-	
+	accountFunds = bankersRound(accountFunds - tradeObjOld.price_usd * amount);
+	document.getElementById("accountFunds").innerHTML = `$${accountFunds}`;
 	let trElements = [document.getElementById("tradeTableBody")
 		.appendChild(document.createElement("tr"))];
 	let tdElements = [
@@ -63,13 +72,21 @@ let tradeTable = async () => {
 	tdElements[2].innerHTML = `${tradeObjOld.price_usd}`;
 	tdElements[3].innerHTML = `${tradeObjOld.price_usd * amount}`;
 	tdElements[4].innerHTML = `SELL ${tradeObjOld.symbol}`;
+	tdElements[4].addEventListener("click", function press (event) {
+		let parent = event.target.parentNode;
+		event.target.removeEventListener("click", press);
+		accountFunds = bankersRound(accountFunds + Number(parent.childNodes[3].innerHTML));
+		document.getElementById("accountFunds").innerHTML = `$${accountFunds}`;
+		parent.replaceChildren();
+		parent.remove();
+	});
 
 	//Creates button that removes table
 	document.getElementById("tradeButtons")
 		.appendChild(document.createElement("button")).id = "sellAllButton";
 	document.getElementById("sellAllButton").innerHTML = "SELL ALL";
 	document.getElementById("sellAllButton")
-		.addEventListener("click", async () => {
+		.addEventListener("click", async (event) => {
 			document.getElementById("sellAllButton").remove();
 			document.getElementById("buyButton")
 				.removeEventListener("click", buy);
@@ -88,23 +105,37 @@ let tradeTable = async () => {
 				.addEventListener("click", tradeTable);
 		});
 	//Change effect of buy button
-	let buy = () => {
-			let index = trElements.push(document.getElementById("tradeTableBody")
-				.appendChild(document.createElement("tr"))) - 1;
-			console.log(trElements[index]);
-			tdElements = [
-				trElements[index].appendChild(document.createElement("td")),
-				trElements[index].appendChild(document.createElement("td")),
-				trElements[index].appendChild(document.createElement("td")),
-				trElements[index].appendChild(document.createElement("td")),
-				trElements[index].appendChild(document.createElement("button"))
-			];
-			tdElements[0].innerHTML = `${tradeObjOld.name}`;
-			tdElements[1].innerHTML = `${amount}`;
-			tdElements[2].innerHTML = `${tradeObjOld.price_usd}`;
-			tdElements[3].innerHTML = `${tradeObjOld.price_usd * amount}`;
-			tdElements[4].innerHTML = `SELL ${tradeObjOld.symbol}`;
-		}
+	let buy = async () => {
+		id = parseNumber(document.getElementById("buyNameText").value);
+		tradeObjOld = await fetch(`https://api.coinlore.net/api/ticker/?id=${id}`)
+			.then(response => response.json());
+		tradeObjOld = tradeObjOld[0];
+		accountFunds = bankersRound(accountFunds - tradeObjOld.price_usd * amount);
+		document.getElementById("accountFunds").innerHTML = `$${accountFunds}`;
+		let index = trElements.push(document.getElementById("tradeTableBody")
+			.appendChild(document.createElement("tr"))) - 1;
+		console.log(trElements[index]);
+		tdElements = [
+			trElements[index].appendChild(document.createElement("td")),
+			trElements[index].appendChild(document.createElement("td")),
+			trElements[index].appendChild(document.createElement("td")),
+			trElements[index].appendChild(document.createElement("td")),
+			trElements[index].appendChild(document.createElement("button"))
+		];
+		tdElements[0].innerHTML = `${tradeObjOld.name}`;
+		tdElements[1].innerHTML = `${amount}`;
+		tdElements[2].innerHTML = `${tradeObjOld.price_usd}`;
+		tdElements[3].innerHTML = `${tradeObjOld.price_usd * amount}`;
+		tdElements[4].innerHTML = `SELL ${tradeObjOld.symbol}`;
+		tdElements[4].addEventListener("click", function press (event) {
+			let parent = event.target.parentNode;
+			event.target.removeEventListener("click", press);
+			accountFunds = bankersRound(accountFunds + Number(parent.childNodes[3].innerHTML));
+			document.getElementById("accountFunds").innerHTML = `$${accountFunds}`;
+			parent.replaceChildren();
+			parent.remove();
+		});
+	}
 	document.getElementById("buyButton")
 		.addEventListener("click", buy);
 	//Refreshes td elements
@@ -112,7 +143,7 @@ let tradeTable = async () => {
 	let time = 2000;
 	let timeResetCount = 0;
 	while (run) {
-		tradeObjNew = await fetch(`https://api.coinlore.net/api/ticker/?id=${document.getElementById("buyNameText").value}`)
+		tradeObjNew = await fetch(`https://api.coinlore.net/api/ticker/?id=${id}`)
 			.then(response => response.json());
 		tradeObjNew = tradeObjNew[0];
 		if (JSON.stringify(tradeObjOld) !== JSON.stringify(tradeObjNew)) {
@@ -144,6 +175,7 @@ let tickerTable = async () => {
 	document.getElementById("tickerButton")
 		.removeEventListener("click", tickerTable);
 	let run = true;
+	let id = parseNumber(document.getElementById("tickerText").value);
 	//Creates tickerTable
 	document.getElementById("ticker").appendChild(document.createElement("table"))
 		.id = "tickerTable";
@@ -159,7 +191,7 @@ let tickerTable = async () => {
 	document.getElementById("tickerTable")
 		.appendChild(document.createElement("tbody")).id = "tickerTableBody";
 	//Creates td elements
-	let tickerObjOld = await fetch(`https://api.coinlore.net/api/ticker/?id=${document.getElementById("tickerText").value}`)
+	let tickerObjOld = await fetch(`https://api.coinlore.net/api/ticker/?id=${id}`)
 			.then(response => response.json())
 	tickerObjOld = tickerObjOld[0];
 	let tdElements = [];
@@ -191,7 +223,8 @@ let tickerTable = async () => {
 	let time = 2000;
 	let timeResetCount = 0;
 	while (run) {
-		tickerObjNew = await fetch(`https://api.coinlore.net/api/ticker/?id=${document.getElementById("tickerText").value}`)
+		id = parseNumber(document.getElementById("tickerText").value);
+		tickerObjNew = await fetch(`https://api.coinlore.net/api/ticker/?id=${id}`)
 				.then(response => response.json());
 		tickerObjNew = tickerObjNew[0];
 		if (JSON.stringify(tickerObjOld) !== JSON.stringify(tickerObjNew)) {

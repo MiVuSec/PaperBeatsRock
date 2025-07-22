@@ -1,0 +1,25 @@
+{
+  "name": "PaperBeatsRock",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "jest /test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MiVuSec/PaperBeatsRock.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MiVuSec/PaperBeatsRock/issues"
+  },
+  "homepage": "https://github.com/MiVuSec/PaperBeatsRock#readme",
+  "devDependencies": {
+    "jest": "^27.5.1"
+  }
+}
